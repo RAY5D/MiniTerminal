@@ -31,7 +31,8 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "../../Graphic_BW/inc/Graphic_BW.h"
+#include "../../Drivers/SSD1309/inc/SSD1309.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -49,8 +50,6 @@ extern "C" {
 
 /* USER CODE END EM */
 
-void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
-
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -59,14 +58,14 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define OLED_PWR_Pin GPIO_PIN_0
-#define OLED_PWR_GPIO_Port GPIOA
-#define OLED_RES_Pin GPIO_PIN_1
-#define OLED_RES_GPIO_Port GPIOA
-#define OLED_CS_Pin GPIO_PIN_4
-#define OLED_CS_GPIO_Port GPIOA
-#define OLED_DC_Pin GPIO_PIN_6
-#define OLED_DC_GPIO_Port GPIOA
+#define SSD1309_PWR_Pin GPIO_PIN_0
+#define SSD1309_PWR_GPIO_Port GPIOA
+#define SSD1309_RES_Pin GPIO_PIN_1
+#define SSD1309_RES_GPIO_Port GPIOA
+#define SSD1309_CS_Pin GPIO_PIN_4
+#define SSD1309_CS_GPIO_Port GPIOA
+#define SSD1309_DC_Pin GPIO_PIN_6
+#define SSD1309_DC_GPIO_Port GPIOA
 #define Key_1_Pin GPIO_PIN_12
 #define Key_1_GPIO_Port GPIOB
 #define Key_2_Pin GPIO_PIN_13
