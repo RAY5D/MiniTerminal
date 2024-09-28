@@ -1,4 +1,4 @@
-#include "../inc/SSD1309.h"
+#include "SSD1309.h"
 
 static SSD1309_State_t SSD1309_State = SSD1309_State_POR_0;
 static SSD1309_CMDQueue_t SSD1309_CMDQueue =
@@ -107,9 +107,9 @@ void SSD1309_Init()
 	SSD1309_InitPlatform();
 }
 
-SSD1309_Return_t SSD1309_CheckReady()
+uint32_t SSD1309_CheckReady() /// change to Return_t and see how to implement in GBW where it does not include SSD1309.h
 {
-	if (SSD1309_DataBuffer.Size == 0 && SSD1309_CMDQueue.Used == 0)
+	if (SSD1309_DataBuffer.Size == 0 && SSD1309_CMDQueue.Used == 0 && SSD1309_State == SSD1309_State_Idle)
 	{
 		return SSD1309_Return_OK;
 	}
@@ -119,17 +119,18 @@ SSD1309_Return_t SSD1309_CheckReady()
 	}
 }
 
-SSD1309_Return_t SSD1309_FlushData(uint8_t* Data, uint32_t Size)
+uint32_t SSD1309_SendFrame(uint8_t* Data, uint32_t Size) /// change to Return_t and see how to implement in GBW where it does not include SSD1309.h
 {
-	if (SSD1309_DataBuffer.Size == 0)
+	if (SSD1309_CheckReady() != SSD1309_Return_OK)
 	{
-		SSD1309_DataBuffer.Data = Data;
-		SSD1309_DataBuffer.Size = Size;
-		return SSD1309_Return_OK;
+		return SSD1309_Return_BUSY;
 	}
 	else
 	{
-		return SSD1309_Return_BUSY;
+		SSD1309_QueueCMD((uint8_t[]){ 0x21, 0x00, 0x7F, 0x22, 0x00, 0x07 }, 6);
+		SSD1309_DataBuffer.Data = Data;
+		SSD1309_DataBuffer.Size = Size;
+		return SSD1309_Return_OK;
 	}
 }
 

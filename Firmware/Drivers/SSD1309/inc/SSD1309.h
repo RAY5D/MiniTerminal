@@ -51,8 +51,8 @@ void SSD1309_PeriodicHandler(); // Call in timer interrupt, Typ 10kHz @ 72MHz, c
 void SSD1309_TsfrCpltHandler(); // Call in HAL_SPI_TxCpltCallback()
 
 void SSD1309_Init();
-SSD1309_Return_t SSD1309_CheckReady(); // Check if the IC is completely idle
-SSD1309_Return_t SSD1309_FlushData(uint8_t* Data, uint32_t Size); // mark frame buffer ready to flush
+uint32_t SSD1309_CheckReady(); // Check if the IC is completely idle
+uint32_t SSD1309_SendFrame(uint8_t* Data, uint32_t Size);
 SSD1309_Return_t SSD1309_QueueCMD(uint8_t* Data, uint32_t Size); // Add config to queue
 
 #endif /* SSD1309_H */

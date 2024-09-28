@@ -31,8 +31,9 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "../../Graphic_BW/inc/Graphic_BW.h"
-#include "../../Drivers/SSD1309/inc/SSD1309.h"
+#include "GUI.h"
+#include "Graphic_BW.h"
+#include "SSD1309.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

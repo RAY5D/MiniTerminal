@@ -1,62 +1,140 @@
-#include "../inc/Graphic_BW.h"
+#include "Graphic_BW.h"
 
-void GBW_SetBufferRes(GBW_FrameBuffer_t* Buffer, uint32_t X, uint32_t Y)
+static GBW_Tick_t GBW_Tick = 0;
+
+// Initializes an instance, call after declaring the struct
+void GBW_Init
+(
+	GBW_Instance_t* Instance,
+	uint32_t ResX,
+	uint32_t ResY,
+	uint8_t* FrameBuffer,
+	uint32_t FrameBuffer_Len,
+	uint32_t FrameRate,
+	void (*DrawFunc)(GBW_Instance_t*),
+	uint32_t (*SendFunc)(uint8_t*, uint32_t),
+	uint32_t (*CheckFunc)()
+)
 {
-	if (X != 0)
+	int CheckOK = 1;
+
+	Instance->ResX = ResX;
+	Instance->ResY = ResY;
+
+	if (FrameBuffer_Len != ResX * ResY / GBW_PixelPerData)
 	{
-		Buffer->ResX = X;
+		CheckOK = 0;
 	}
-	if (Y != 0)
+
+	Instance->FrameBuffer = FrameBuffer;
+	Instance->FrameBuffer_Len = FrameBuffer_Len;
+	Instance->FrameRate = FrameRate;
+	Instance->LastFrame = 0;
+	Instance->Draw = DrawFunc;
+	Instance->Send = SendFunc;
+	Instance->Check = CheckFunc;
+
+	if (CheckOK)
 	{
-		Buffer->ResY = Y;
+		Instance->State = GBW_State_Ready;
+	}
+	else
+	{
+		Instance->State = GBW_State_Reset;
 	}
 }
 
-void GBW_Fill(GBW_FrameBuffer_t* Buffer, GBW_Color_t Color)
+// Handles redraw and send, call in main loop
+void GBW_LoopHandler(GBW_Instance_t* Instance)
 {
-	int32_t Buffer_ResX = Buffer->ResX;
-	int32_t Buffer_ResY = Buffer->ResY;
-	uint8_t* Buffer_Data = Buffer->Data;
-	int32_t i_Max = (Buffer_ResX * Buffer_ResY / 8);
+	switch(Instance->State)
+	{
+		case GBW_State_Reset:
+			break;
+		case GBW_State_Ready:
+			GBW_Tick_t CrntTick = GBW_GetTick();
+			if (CrntTick - Instance->FrameRate >= Instance->LastFrame)
+			{
+				// New frame needed
+				Instance->LastFrame = CrntTick;
+				Instance->State = GBW_State_Drawing;
+				Instance->Draw(Instance);
+			}
+			break;
+		case GBW_State_Drawing:
+			if (Instance->Send(Instance->FrameBuffer, Instance->FrameBuffer_Len) == 0) ///////////maybe change how this is called? how to implement?
+			{
+				Instance->State = GBW_State_Sending;
+			}
+			break;
+		case GBW_State_Sending:
+			if (Instance->Check() == 0) ///////////maybe change how this is called? how to implement?
+			{
+				Instance->State = GBW_State_Ready;
+			}
+			break;
+		default:
+			break;
+	}
+
+
+}
+
+// Increments GBW tick, call in systick ISR
+void GBW_TickInc()
+{
+	GBW_Tick ++;
+}
+
+// Get GBW tick, used for frame rate, GUI can use this function as well
+GBW_Tick_t GBW_GetTick()
+{
+	return GBW_Tick;
+}
+
+// Draw function used to fill the entire frame buffer to a color
+void GBW_Fill(GBW_Instance_t* Instance, GBW_Color_t Color)
+{
+	int32_t i_Max = (Instance->ResX * Instance->ResY / 8);
 
 	if (Color)
 	{
 		for (int32_t i = 0; i < i_Max; i++)
 		{
-			Buffer_Data[i] = 0xff;
+			Instance->FrameBuffer[i] = 0xff;
 		}
 	}
 	else
 	{
 		for (int32_t i = 0; i < i_Max; i++)
 		{
-			Buffer_Data[i] = 0x00;
+			Instance->FrameBuffer[i] = 0x00;
 		}
 	}
 }
 
-void GBW_Draw_Pixel_Fast(GBW_FrameBuffer_t* Buffer, GBW_Color_t Color, int32_t X, int32_t Y)
-{
-	int32_t Buffer_ResX = Buffer->ResX;
-	uint8_t* Buffer_Data = Buffer->Data;
-
-	uint8_t Mask = 0x01 << (Y % 8);
-	Y /= 8;
-	if (Color)
-	{
-		Buffer_Data[Y * Buffer_ResX + X] |= Mask;
-	}
-	else
-	{
-		Buffer_Data[Y * Buffer_ResX + X] &= ~Mask;
-	}
-}
-
-void GBW_Draw_Pixel_Safe(GBW_FrameBuffer_t* Buffer, GBW_Color_t Color, int32_t X, int32_t Y)
-{
-	if (X < 0 || X >= Buffer->ResX || Y < 0 || Y >= Buffer->ResY) {return;} // Off-screen
-	GBW_Draw_Pixel_Fast(Buffer, Color, X, Y);
-}
+//void GBW_Draw_Pixel_Fast(GBW_FrameBuffer_t* Buffer, GBW_Color_t Color, int32_t X, int32_t Y)
+//{
+//	int32_t Buffer_ResX = Buffer->ResX;
+//	uint8_t* Buffer_Data = Buffer->Data;
+//
+//	uint8_t Mask = 0x01 << (Y % 8);
+//	Y /= 8;
+//	if (Color)
+//	{
+//		Buffer_Data[Y * Buffer_ResX + X] |= Mask;
+//	}
+//	else
+//	{
+//		Buffer_Data[Y * Buffer_ResX + X] &= ~Mask;
+//	}
+//}
+//
+//void GBW_Draw_Pixel_Safe(GBW_FrameBuffer_t* Buffer, GBW_Color_t Color, int32_t X, int32_t Y)
+//{
+//	if (X < 0 || X >= Buffer->ResX || Y < 0 || Y >= Buffer->ResY) {return;} // Off-screen
+//	GBW_Draw_Pixel_Fast(Buffer, Color, X, Y);
+//}
 //
 //void GBW_Draw_SlidRect_Fast(uint8_t* Buffer, uint32_t Color, int32_t X1, int32_t X2, int32_t Y1, int32_t Y2)
 //{

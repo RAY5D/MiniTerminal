@@ -1,4 +1,4 @@
-#include "../inc/SSD1309_Specifics.h"
+#include "SSD1309_Specifics.h"
 
 extern SPI_HandleTypeDef SSD1309_SPI;
 extern TIM_HandleTypeDef SSD1309_TIM;
