@@ -102,14 +102,13 @@ int main(void)
 
 	uint8_t FB_Data[SSD1309_ResX * SSD1309_ResY / GBW_PixelPerData] = { 0 };
 	GBW_Instance_t Display;
-	GBW_Init(&Display, SSD1309_ResX, SSD1309_ResY, FB_Data, sizeof(FB_Data), 5, GUI_Draw, SSD1309_SendFrame, SSD1309_CheckReady);
+	GBW_Init(&Display, 	SSD1309_ResX, SSD1309_ResY, FB_Data, sizeof(FB_Data), 10, GUI_Draw, (uint32_t (*)(uint8_t*, uint32_t)) SSD1309_FlushFrame, (uint32_t (*)(void)) SSD1309_CheckReady);
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	while (1)
 	{
-
 		GBW_LoopHandler(&Display);
 		/* USER CODE END WHILE */
 

@@ -62,12 +62,12 @@ void SSD1309_PeriInt_Start()
 	(SSD1309_TIM.Instance)->DIER |= TIM_DIER_UIE;
 }
 
-SSD1309_LLReturn_t SSD1309_WriteCMD(uint8_t CMD)
+SSD1309_Return_t SSD1309_WriteCMD(uint8_t CMD)
 {
 	static uint8_t Buffer = 0;
 	if (HAL_SPI_GetState(&SSD1309_SPI) != HAL_SPI_STATE_READY)
 	{
-		return SSD1309_LLReturn_BUSY;
+		return SSD1309_Return_BUSY;
 	}
 	else
 	{
@@ -77,20 +77,42 @@ SSD1309_LLReturn_t SSD1309_WriteCMD(uint8_t CMD)
 		if (HAL_SPI_Transmit_IT(&SSD1309_SPI, &Buffer, 1) != HAL_OK)
 		{
 			Error_Handler();
-			return SSD1309_LLReturn_BUSY;
+			return SSD1309_Return_BUSY;
 		}
 		else
 		{
-			return SSD1309_LLReturn_OK;
+			return SSD1309_Return_OK;
 		}
 	}
 }
 
-SSD1309_LLReturn_t SSD1309_WriteDataDMA(uint8_t* Buffer, uint32_t Count)
+SSD1309_Return_t SSD1309_WriteCMDDMA(uint8_t* Buffer, uint32_t Count)
 {
 	if (HAL_SPI_GetState(&SSD1309_SPI) != HAL_SPI_STATE_READY)
 	{
-		return SSD1309_LLReturn_BUSY;
+		return SSD1309_Return_BUSY;
+	}
+	else
+	{
+		SSD1309_WritePin(SSD1309_Pin_CS, SSD1309_PinState_0);
+		SSD1309_WritePin(SSD1309_Pin_DC, SSD1309_PinState_0);
+		if (HAL_SPI_Transmit_DMA(&SSD1309_SPI, Buffer, Count) != HAL_OK)
+		{
+			Error_Handler();
+			return SSD1309_Return_BUSY;
+		}
+		else
+		{
+			return SSD1309_Return_OK;
+		}
+	}
+}
+
+SSD1309_Return_t SSD1309_WriteDataDMA(uint8_t* Buffer, uint32_t Count)
+{
+	if (HAL_SPI_GetState(&SSD1309_SPI) != HAL_SPI_STATE_READY)
+	{
+		return SSD1309_Return_BUSY;
 	}
 	else
 	{
@@ -99,11 +121,11 @@ SSD1309_LLReturn_t SSD1309_WriteDataDMA(uint8_t* Buffer, uint32_t Count)
 		if (HAL_SPI_Transmit_DMA(&SSD1309_SPI, Buffer, Count) != HAL_OK)
 		{
 			Error_Handler();
-			return SSD1309_LLReturn_BUSY;
+			return SSD1309_Return_BUSY;
 		}
 		else
 		{
-			return SSD1309_LLReturn_OK;
+			return SSD1309_Return_OK;
 		}
 	}
 }

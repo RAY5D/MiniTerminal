@@ -3,21 +3,11 @@
 
 // Include
 #include <stdint.h>
-#include "Graphic_BW_Specifics.h"
 
 // Defines
 #define GBW_PixelPerData (8)
 
 // Typedef
-
-// Only one format is supported
-//        X0 X1 X2 ...
-//     Y0 b0 b0 b0 ...
-//     Y1 b1 b1 b1 ...
-//     Y2 b2 b2 b2 ...
-//     Y3 b3 b3 b3 ...
-//     Y4 b4 b4 b4 ...
-//     ...
 typedef uint32_t GBW_Tick_t;
 
 typedef enum
@@ -41,12 +31,21 @@ typedef struct _GBW_Instance_t
 	uint8_t* FrameBuffer;
 	uint32_t FrameBuffer_Len;
 	GBW_State_t State;
-	uint32_t FrameRate;
-	uint32_t LastFrame;
-	void (*Draw)(struct _GBW_Instance_t*);
-	uint32_t (*Send)(uint8_t*, uint32_t);
-	uint32_t (*Check)();
+	uint32_t MinFramePeriod;
+	uint32_t LastFrameTick;
+	void (*GUIDrawCB)(struct _GBW_Instance_t*);
+	uint32_t (*DriverFlushCB)(uint8_t*, uint32_t);
+	uint32_t (*DriverCheckIdleCB)(void);
 } GBW_Instance_t;
+
+// Only one format is supported
+//        X0 X1 X2 ...
+//     Y0 b0 b0 b0 ...
+//     Y1 b1 b1 b1 ...
+//     Y2 b2 b2 b2 ...
+//     Y3 b3 b3 b3 ...
+//     Y4 b4 b4 b4 ...
+//     ...
 
 // Functions
 void GBW_Init
@@ -59,22 +58,41 @@ void GBW_Init
 	uint32_t FrameRate,
 	void (*DrawFunc)(GBW_Instance_t*),
 	uint32_t (*SendFunc)(uint8_t*, uint32_t),
-	uint32_t (*CheckFunc)()
+	uint32_t (*CheckFunc)(void)
 );
 void GBW_LoopHandler(GBW_Instance_t* Instance);
 void GBW_TickInc();
 GBW_Tick_t GBW_GetTick();
 
-///change all below to instance instead of buffer
-void GBW_Fill(GBW_Instance_t* Instance, GBW_Color_t Color);
-//void GBW_Draw_Pixel_Fast	(GBW_FrameBuffer_t* Buffer, GBW_Color_t Color, int32_t X, int32_t Y);
-//void GBW_Draw_Pixel_Safe	(GBW_FrameBuffer_t* Buffer, GBW_Color_t Color, int32_t X, int32_t Y);
-//void GBW_Draw_SlidRect_Fast	(GBW_FrameBuffer_t* Buffer, GBW_Color_t Color, int32_t X1, int32_t X2, int32_t Y1, int32_t Y2);
-//void GBW_Draw_SlidRect_Safe	(GBW_FrameBuffer_t* Buffer, GBW_Color_t Color, int32_t X1, int32_t X2, int32_t Y1, int32_t Y2);
-//void GBW_Draw_HLine_Fast	(GBW_FrameBuffer_t* Buffer, GBW_Color_t Color, int32_t X1, int32_t X2, int32_t Y);
-//void GBW_Draw_HLine_Safe	(GBW_FrameBuffer_t* Buffer, GBW_Color_t Color, int32_t X1, int32_t X2, int32_t Y);
-//void GBW_Draw_VLine_Fast	(GBW_FrameBuffer_t* Buffer, GBW_Color_t Color, int32_t X,  int32_t Y1, int32_t Y2);
-//void GBW_Draw_VLine_Safe	(GBW_FrameBuffer_t* Buffer, GBW_Color_t Color, int32_t X,  int32_t Y1, int32_t Y2);
-//void GBW_Draw_Circle_Safe	(GBW_FrameBuffer_t* Buffer, GBW_Color_t Color, int32_t X, int32_t Y, int32_t R);
+// Graphic Functions
+#define GBW_Draw_Pixel_Fast(Instance, Color, X, Y) (\
+{\
+	uint32_t Index = ((Y) / GBW_PixelPerData) * ((Instance)->ResX) + (X);\
+	if (Color)\
+	{\
+		((Instance)->FrameBuffer)[Index] |= (1 << ((Y) % GBW_PixelPerData));\
+	}\
+	else\
+	{\
+		((Instance)->FrameBuffer)[Index] &= ~(1 << ((Y) % GBW_PixelPerData));\
+	}\
+})
+
+#define GBW_Draw_Pixel_Safe(Instance, Color, X, Y) (\
+{\
+	if ((X) >= 0 && (X) < (Instance)->ResX && (Y) >= 0 && (Y) < (Instance)->ResY)\
+	{\
+		GBW_Draw_Pixel_Fast((Instance), (Color), (X), (Y));\
+	}\
+})
+
+void GBW_Fill				(GBW_Instance_t* Instance, GBW_Color_t Color);
+void GBW_Draw_SlidRect_Fast	(GBW_Instance_t* Instance, GBW_Color_t Color, int32_t X1, int32_t X2, int32_t Y1, int32_t Y2);
+void GBW_Draw_SlidRect_Safe	(GBW_Instance_t* Instance, GBW_Color_t Color, int32_t X1, int32_t X2, int32_t Y1, int32_t Y2);
+//void GBW_Draw_HLine_Fast	(GBW_Instance_t* Instance, GBW_Color_t Color, int32_t X1, int32_t X2, int32_t Y);
+//void GBW_Draw_HLine_Safe	(GBW_Instance_t* Instance, GBW_Color_t Color, int32_t X1, int32_t X2, int32_t Y);
+//void GBW_Draw_VLine_Fast	(GBW_Instance_t* Instance, GBW_Color_t Color, int32_t X,  int32_t Y1, int32_t Y2);
+//void GBW_Draw_VLine_Safe	(GBW_Instance_t* Instance, GBW_Color_t Color, int32_t X,  int32_t Y1, int32_t Y2);
+void GBW_Draw_Circle_Safe	(GBW_Instance_t* Instance, GBW_Color_t Color, int32_t X, int32_t Y, int32_t R);
 
 #endif /* GRAPHIC_BW_H */

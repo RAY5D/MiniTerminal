@@ -64,17 +64,26 @@ void SSD1309_PeriodicHandler()
 	{
 		if (SSD1309_CMDQueue.Used > 0)
 		{
-			uint8_t CMD = SSD1309_CMDQueue.Data[SSD1309_CMDQueue.Start];
-			if (SSD1309_WriteCMD(CMD) == SSD1309_LLReturn_OK)
+			uint8_t CMDSendLen = 0;
+			if (SSD1309_CMDQueue.Start + SSD1309_CMDQueue.Used > SSD1309_CMDQueueLen) // Wrapping around, send till ring buffer end
 			{
-				SSD1309_CMDQueue.Used --;
-				SSD1309_CMDQueue.Start = (SSD1309_CMDQueue.Start + 1) % SSD1309_CMDQueueLen;
+				CMDSendLen = SSD1309_CMDQueueLen - SSD1309_CMDQueue.Start;
+			}
+			else // Continuous, send all
+			{
+				CMDSendLen = SSD1309_CMDQueue.Used;
+			}
+
+			if (SSD1309_WriteCMDDMA(SSD1309_CMDQueue.Data + SSD1309_CMDQueue.Start, CMDSendLen) == SSD1309_Return_OK)
+			{
+				SSD1309_CMDQueue.Used -= CMDSendLen;
+				SSD1309_CMDQueue.Start = (SSD1309_CMDQueue.Start + CMDSendLen) % SSD1309_CMDQueueLen;
 				SSD1309_State = SSD1309_State_CMD_Send;
 			}
 		}
 		else if (SSD1309_DataBuffer.Size > 0)
 		{
-			if (SSD1309_WriteDataDMA(SSD1309_DataBuffer.Data, SSD1309_DataBuffer.Size) == SSD1309_LLReturn_OK)
+			if (SSD1309_WriteDataDMA(SSD1309_DataBuffer.Data, SSD1309_DataBuffer.Size) == SSD1309_Return_OK)
 			{
 				SSD1309_DataBuffer.Data = NULL;
 				SSD1309_DataBuffer.Size = 0;
@@ -107,7 +116,7 @@ void SSD1309_Init()
 	SSD1309_InitPlatform();
 }
 
-uint32_t SSD1309_CheckReady() /// change to Return_t and see how to implement in GBW where it does not include SSD1309.h
+SSD1309_Return_t SSD1309_CheckReady()
 {
 	if (SSD1309_DataBuffer.Size == 0 && SSD1309_CMDQueue.Used == 0 && SSD1309_State == SSD1309_State_Idle)
 	{
@@ -119,7 +128,7 @@ uint32_t SSD1309_CheckReady() /// change to Return_t and see how to implement in
 	}
 }
 
-uint32_t SSD1309_SendFrame(uint8_t* Data, uint32_t Size) /// change to Return_t and see how to implement in GBW where it does not include SSD1309.h
+SSD1309_Return_t SSD1309_FlushFrame(uint8_t* Data, uint32_t Size)
 {
 	if (SSD1309_CheckReady() != SSD1309_Return_OK)
 	{
@@ -127,7 +136,10 @@ uint32_t SSD1309_SendFrame(uint8_t* Data, uint32_t Size) /// change to Return_t 
 	}
 	else
 	{
-		SSD1309_QueueCMD((uint8_t[]){ 0x21, 0x00, 0x7F, 0x22, 0x00, 0x07 }, 6);
+		if (SSD1309_QueueCMD((uint8_t[]){ 0x21, 0x00, 0x7F, 0x22, 0x00, 0x07 }, 6) != SSD1309_Return_OK)
+		{
+			return SSD1309_Return_BUSY;
+		}
 		SSD1309_DataBuffer.Data = Data;
 		SSD1309_DataBuffer.Size = Size;
 		return SSD1309_Return_OK;
@@ -136,7 +148,7 @@ uint32_t SSD1309_SendFrame(uint8_t* Data, uint32_t Size) /// change to Return_t 
 
 SSD1309_Return_t SSD1309_QueueCMD(uint8_t* Data, uint32_t Size)
 {
-	if (Size <= SSD1309_CMDQueueLen - SSD1309_CMDQueue.Used) // CMD queued
+	if (Size <= SSD1309_CMDQueueLen - SSD1309_CMDQueue.Used) // Enough space in queue
 	{
 		SSD1309_PeriInt_Stop();
 
