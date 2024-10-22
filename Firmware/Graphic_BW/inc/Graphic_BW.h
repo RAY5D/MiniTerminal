@@ -9,6 +9,7 @@
 
 // Typedef
 typedef uint32_t GBW_Tick_t;
+typedef int32_t GBW_CoordElmt_t;
 
 typedef enum
 {
@@ -24,10 +25,16 @@ typedef enum
 	GBW_State_Sending	// Sending to screen
 } GBW_State_t;
 
+typedef struct
+{
+	GBW_CoordElmt_t X;
+	GBW_CoordElmt_t Y;
+} GBW_Coord_t;
+
 typedef struct _GBW_Instance_t
 {
-	uint32_t ResX;
-	uint32_t ResY;
+	GBW_CoordElmt_t ResX;
+	GBW_CoordElmt_t ResY;
 	uint8_t* FrameBuffer;
 	uint32_t FrameBuffer_Len;
 	GBW_State_t State;
@@ -86,13 +93,23 @@ GBW_Tick_t GBW_GetTick();
 	}\
 })
 
-void GBW_Fill				(GBW_Instance_t* Instance, GBW_Color_t Color);
-void GBW_Draw_SlidRect_Fast	(GBW_Instance_t* Instance, GBW_Color_t Color, int32_t X1, int32_t X2, int32_t Y1, int32_t Y2);
-void GBW_Draw_SlidRect_Safe	(GBW_Instance_t* Instance, GBW_Color_t Color, int32_t X1, int32_t X2, int32_t Y1, int32_t Y2);
-//void GBW_Draw_HLine_Fast	(GBW_Instance_t* Instance, GBW_Color_t Color, int32_t X1, int32_t X2, int32_t Y);
-//void GBW_Draw_HLine_Safe	(GBW_Instance_t* Instance, GBW_Color_t Color, int32_t X1, int32_t X2, int32_t Y);
-//void GBW_Draw_VLine_Fast	(GBW_Instance_t* Instance, GBW_Color_t Color, int32_t X,  int32_t Y1, int32_t Y2);
-//void GBW_Draw_VLine_Safe	(GBW_Instance_t* Instance, GBW_Color_t Color, int32_t X,  int32_t Y1, int32_t Y2);
-void GBW_Draw_Circle_Safe	(GBW_Instance_t* Instance, GBW_Color_t Color, int32_t X, int32_t Y, int32_t R);
+void GBW_Draw_Fill					(GBW_Instance_t* Instance, GBW_Color_t Color);
+void GBW_Draw_SlidRect_Fast			(GBW_Instance_t* Instance, GBW_Color_t Color, GBW_Coord_t Corner1, GBW_Coord_t Corner2);
+void GBW_Draw_SlidRect_Safe			(GBW_Instance_t* Instance, GBW_Color_t Color, GBW_Coord_t Corner1, GBW_Coord_t Corner2);
+void GBW_Draw_HlowRect_Fast			(GBW_Instance_t* Instance, GBW_Color_t Color, GBW_Coord_t Corner1, GBW_Coord_t Corner2);
+void GBW_Draw_HlowRect_Safe			(GBW_Instance_t* Instance, GBW_Color_t Color, GBW_Coord_t Corner1, GBW_Coord_t Corner2);
+void GBW_Draw_HLine_Fast			(GBW_Instance_t* Instance, GBW_Color_t Color, GBW_CoordElmt_t X1, GBW_CoordElmt_t X2, GBW_CoordElmt_t Y);
+void GBW_Draw_HLine_Safe			(GBW_Instance_t* Instance, GBW_Color_t Color, GBW_CoordElmt_t X1, GBW_CoordElmt_t X2, GBW_CoordElmt_t Y);
+void GBW_Draw_VLine_Fast			(GBW_Instance_t* Instance, GBW_Color_t Color, GBW_CoordElmt_t X,  GBW_CoordElmt_t Y1, GBW_CoordElmt_t Y2);
+void GBW_Draw_VLine_Safe			(GBW_Instance_t* Instance, GBW_Color_t Color, GBW_CoordElmt_t X,  GBW_CoordElmt_t Y1, GBW_CoordElmt_t Y2);
+void GBW_Draw_Circle_Fast			(GBW_Instance_t* Instance, GBW_Color_t Color, GBW_Coord_t Center, int32_t R);
+void GBW_Draw_Circle_Safe			(GBW_Instance_t* Instance, GBW_Color_t Color, GBW_Coord_t Center, int32_t R);
+void GBW_Draw_Disk_Fast				(GBW_Instance_t* Instance, GBW_Color_t Color, GBW_Coord_t Center, int32_t R);
+void GBW_Draw_Disk_Safe				(GBW_Instance_t* Instance, GBW_Color_t Color, GBW_Coord_t Center, int32_t R);
+void GBW_Draw_RoundHlowRect_Fast	(GBW_Instance_t* Instance, GBW_Color_t Color, GBW_Coord_t Corner1, GBW_Coord_t Corner2, int32_t R);
+void GBW_Draw_RoundHlowRect_Safe	(GBW_Instance_t* Instance, GBW_Color_t Color, GBW_Coord_t Corner1, GBW_Coord_t Corner2, int32_t R);
+void GBW_Draw_RoundSlidRect_Fast	(GBW_Instance_t* Instance, GBW_Color_t Color, GBW_Coord_t Corner1, GBW_Coord_t Corner2, int32_t R);
+void GBW_Draw_RoundSlidRect_Safe	(GBW_Instance_t* Instance, GBW_Color_t Color, GBW_Coord_t Corner1, GBW_Coord_t Corner2, int32_t R);
+
 
 #endif /* GRAPHIC_BW_H */
